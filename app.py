@@ -1,0 +1,93 @@
+import streamlit as st
+import psycopg2
+from pgvector.psycopg2 import register_vector
+import openai
+import json
+
+# Get secrets from Streamlit
+db_secrets = st.secrets["connections.postgresql"]
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+
+def get_conn():
+    conn = psycopg2.connect(
+        dbname=db_secrets["database"],
+        user=db_secrets["username"],
+        password=db_secrets["password"],
+        host=db_secrets["host"],
+        port=db_secrets["port"],
+        sslmode="require"
+    )
+    register_vector(conn)
+    return conn
+
+def get_embedding(text):
+    response = openai.embeddings.create(
+        input=text,
+        model="text-embedding-ada-002"
+    )
+    return response.data[0].embedding
+
+def hybrid_retrieve_pg(query, top_k=5):
+    emb = get_embedding(query)
+    with get_conn() as conn:
+        register_vector(conn)
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, document, metadata, 1 - (embedding <=> %s::vector) AS score
+                FROM hcmbot_knowledge
+                ORDER BY embedding <=> %s::vector
+                LIMIT %s
+            """, (emb, emb, top_k*3))
+            vector_results = cur.fetchall()
+            cur.execute("""
+                SELECT id, document, metadata, ts_rank(document_tsv, plainto_tsquery(%s)) AS score
+                FROM hcmbot_knowledge
+                WHERE document_tsv @@ plainto_tsquery(%s)
+                ORDER BY score DESC
+                LIMIT %s
+            """, (query, query, top_k*3))
+            text_results = cur.fetchall()
+    results = {row[0]: (row[1], row[2], row[3], 'vector') for row in vector_results}
+    for row in text_results:
+        if row[0] not in results or row[3] > results[row[0]][2]:
+            results[row[0]] = (row[1], row[2], row[3], 'text')
+    sorted_results = sorted(results.values(), key=lambda x: x[2], reverse=True)
+    return [(doc, meta) for doc, meta, score, _ in sorted_results[:top_k]]
+
+def chat_with_assistant(query, docs, model="gpt-3.5-turbo"):
+    context = "\n\n".join(docs)
+    prompt = f"""You are a precise assistant that answers questions based strictly on the provided context.
+Context:
+{context}
+
+Question: {query}
+Answer:"""
+    response = openai.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=500,
+        temperature=0.3
+    )
+    return response.choices[0].message.content
+
+# Streamlit UI
+st.title("RAG Demo with Neon + pgvector")
+query = st.text_input("Ask a question:")
+if st.button("Submit") and query.strip():
+    st.write("Query Received:", query)
+    results = hybrid_retrieve_pg(query, top_k=5)
+    docs = [doc for doc, meta in results]
+    st.write("**Top relevant knowledge snippets:**")
+    for i, (doc, meta) in enumerate(results):
+        st.markdown(f"**{i+1}. Source:** {meta.get('source', 'unknown')}")
+        st.markdown(f"> {doc[:400]} ...")
+        st.markdown("---")
+    # LLM answer
+    if openai.api_key:
+        try:
+            answer = chat_with_assistant(query, docs)
+            st.success(f"Assistant's answer: {answer}")
+        except Exception as e:
+            st.error(f"LLM error: {str(e)}")
+    else:
+        st.info("Set your OPENAI_API_KEY in .streamlit/secrets.toml to enable LLM answers.")
