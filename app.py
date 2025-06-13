@@ -5,7 +5,7 @@ import openai
 import json
 
 # Get secrets from Streamlit
-db_secrets = st.secrets["connections.postgresql"]
+db_secrets = st.secrets.connections.postgresql
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 def get_conn():
