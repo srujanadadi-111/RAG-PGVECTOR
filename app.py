@@ -71,7 +71,14 @@ Answer:"""
     return response.choices[0].message.content
 
 # Streamlit UI
-st.title("HCM Support Bot")
+st.image("egovlogo.png", width=200)
+st.title("Health Campaign Management (HCM) Support Bot")
+
+st.subheader("Note:")
+st.markdown(
+    '<p style="color:red; font-size:16px;">Please try to be as in detail as possible with your prompt and use full forms for beta version, e.g., Health Campaign Management instead of HCM.</p>',
+    unsafe_allow_html=True,
+)
 query = st.text_input("Ask a question:")
 if st.button("Submit") and query.strip():
     st.write("Query Received:", query)
