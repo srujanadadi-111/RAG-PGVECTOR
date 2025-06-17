@@ -71,17 +71,17 @@ Answer:"""
     return response.choices[0].message.content
 
 # Streamlit UI
-st.title("RAG Demo with Neon + pgvector")
+st.title("HCM Support Bot")
 query = st.text_input("Ask a question:")
 if st.button("Submit") and query.strip():
     st.write("Query Received:", query)
     results = hybrid_retrieve_pg(query, top_k=5)
     docs = [doc for doc, meta in results]
-    st.write("**Top relevant knowledge snippets:**")
-    for i, (doc, meta) in enumerate(results):
-        st.markdown(f"**{i+1}. Source:** {meta.get('source', 'unknown')}")
-        st.markdown(f"> {doc[:400]} ...")
-        st.markdown("---")
+    #st.write("**Top relevant knowledge snippets:**")
+    #for i, (doc, meta) in enumerate(results):
+        #st.markdown(f"**{i+1}. Source:** {meta.get('source', 'unknown')}")
+        #st.markdown(f"> {doc[:400]} ...")
+        #st.markdown("---")
     # LLM answer
     if openai.api_key:
         try:
