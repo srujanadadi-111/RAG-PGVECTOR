@@ -105,7 +105,7 @@ st.markdown(
 
 # Frequent Questions Section
 st.subheader("Most Frequent Questions")
-frequent_queries = get_frequent_queries(5)
+frequent_queries = get_frequent_queries(2)
 for idx, (question, freq) in enumerate(frequent_queries):
     if st.button(f"{question} ({freq}×)", key=f"freq_{idx}", use_container_width=True):
         st.session_state.prefilled_query = question
