@@ -94,7 +94,7 @@ def get_frequent_queries(limit=5):
             return cur.fetchall()
 
 # Streamlit UI
-st.image("egovlogo.png", width=200)
+st.image("newegovlogo.png", width=200)
 st.title("Health Campaign Management (HCM) Support Bot")
 
 st.subheader("Note:")
