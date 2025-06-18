@@ -71,7 +71,7 @@ Answer:"""
     return response.choices[0].message.content
 
 # Streamlit UI
-#st.image("egovlogo.png", width=200)
+st.image("egovlogo.png", width=200)
 st.title("Health Campaign Management (HCM) Support Bot")
 
 st.subheader("Note:")
