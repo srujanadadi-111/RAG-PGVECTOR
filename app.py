@@ -27,6 +27,16 @@ def get_embedding(text):
     )
     return response.data[0].embedding
 
+def log_query(query, answer):
+    """Log user queries and bot responses"""
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO query_history (query, answer)
+                VALUES (%s, %s)
+            """, (query, answer))
+        conn.commit()
+
 def hybrid_retrieve_pg(query, top_k=5):
     emb = get_embedding(query)
     with get_conn() as conn:
@@ -70,6 +80,19 @@ Answer:"""
     )
     return response.choices[0].message.content
 
+def get_frequent_queries(limit=5):
+    """Retrieve most common queries"""
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT query, COUNT(*) AS frequency
+                FROM query_history
+                GROUP BY query
+                ORDER BY frequency DESC
+                LIMIT %s
+            """, (limit,))
+            return cur.fetchall()
+
 # Streamlit UI
 st.image("egovlogo.png", width=200)
 st.title("Health Campaign Management (HCM) Support Bot")
@@ -79,21 +102,32 @@ st.markdown(
     '<p style="color:red; font-size:16px;">Please try to be as in detail as possible with your prompt and use full forms for beta version, e.g., Health Campaign Management instead of HCM.</p>',
     unsafe_allow_html=True,
 )
-query = st.text_input("Ask a question:")
+
+# Frequent Questions Section
+st.subheader("Most Frequent Questions")
+frequent_queries = get_frequent_queries(5)
+cols = st.columns(2)
+for idx, (question, freq) in enumerate(frequent_queries):
+    with cols[idx % 2]:
+        if st.button(f"{question} ({freq}×)", key=f"freq_{idx}"):
+            st.session_state.prefilled_query = question
+
+query = st.text_input(
+    "Ask a question:",
+    value=st.session_state.get('prefilled_query', ''),
+    key='query_input'
+)
+
 if st.button("Submit") and query.strip():
     st.write("Query Received:", query)
     results = hybrid_retrieve_pg(query, top_k=5)
     docs = [doc for doc, meta in results]
-    #st.write("**Top relevant knowledge snippets:**")
-    #for i, (doc, meta) in enumerate(results):
-        #st.markdown(f"**{i+1}. Source:** {meta.get('source', 'unknown')}")
-        #st.markdown(f"> {doc[:400]} ...")
-        #st.markdown("---")
-    # LLM answer
+    
     if openai.api_key:
         try:
             answer = chat_with_assistant(query, docs)
             st.success(f"Assistant's answer: {answer}")
+            log_query(query, answer)  # Log successful interaction
         except Exception as e:
             st.error(f"LLM error: {str(e)}")
     else:
