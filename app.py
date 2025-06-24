@@ -104,7 +104,7 @@ with col2:
     st.markdown('<div style="text-align: right; font-weight: bold; font-size: 18px; color: #888;">v3</div>', unsafe_allow_html=True)
 
 # Three blank lines after logo
-st.markdown("<br><br><br>", unsafe_allow_html=True)
+st.markdown("<br>", unsafe_allow_html=True)
 
 # Title and description
 st.title("HCM Bot")
