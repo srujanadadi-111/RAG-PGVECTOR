@@ -103,6 +103,9 @@ with col1:
 with col2:
     st.markdown('<div style="text-align: right; font-weight: bold; font-size: 18px; color: #888;">v3</div>', unsafe_allow_html=True)
 
+# Three blank lines after logo
+st.markdown("<br><br><br>", unsafe_allow_html=True)
+
 # Title and description
 st.title("HCM Bot")
 st.markdown(
@@ -113,12 +116,14 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Ask a question (big and bold)
-st.markdown('<div style="font-size:22px; font-weight:bold; margin-top:30px; margin-bottom:10px;">Ask a question:</div>', unsafe_allow_html=True)
+# Ask a question (big and bold), no space before input
+st.markdown('<div style="font-size:22px; font-weight:bold; margin-bottom:0px;">Ask a question:</div>', unsafe_allow_html=True)
+# Larger input box with prompt
 query = st.text_input(
     "",
     value=st.session_state.get('prefilled_query', ''),
-    key='query_input'
+    key='query_input',
+    placeholder="Enter your query here"
 )
 
 if st.button("Submit") and query.strip():
@@ -136,10 +141,20 @@ if st.button("Submit") and query.strip():
     else:
         st.info("Set your OPENAI_API_KEY in .streamlit/secrets.toml to enable LLM answers.")
 
-# FAQ Section (Most Frequent Questions) - shown below submit
-st.markdown('<hr style="margin: 30px 0;">', unsafe_allow_html=True)
+# No extra space before FAQ
+st.markdown('<hr style="margin: 30px 0 0 0;">', unsafe_allow_html=True)
 st.subheader("FAQ")
 frequent_queries = get_frequent_queries(2)
 for idx, (question, freq) in enumerate(frequent_queries):
     if st.button(f"{question} ({freq}×)", key=f"faq_{idx}", use_container_width=True):
         st.session_state.prefilled_query = question
+
+# Optional: Make input box visually bigger (Streamlit doesn't natively support a bigger text_input, but you can use CSS)
+st.markdown("""
+    <style>
+        div[data-baseweb="input"] > div {
+            font-size: 20px !important;
+            height: 60px !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
