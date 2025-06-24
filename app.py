@@ -99,7 +99,7 @@ import streamlit as st
 # Top bar: Logo and Version
 col1, col2 = st.columns([7, 1])
 with col1:
-    st.image("newegovlogo.png", width=200)
+    st.image("newegovlogo.png", width=50)
 with col2:
     st.markdown('<div style="text-align: right; font-weight: bold; font-size: 18px; color: #888;">v3</div>', unsafe_allow_html=True)
 
