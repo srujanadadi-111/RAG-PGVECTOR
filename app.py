@@ -104,7 +104,7 @@ with col2:
     st.markdown('<div style="text-align: right; font-weight: bold; font-size: 18px; color: #888;">v3</div>', unsafe_allow_html=True)
 
 # Three blank lines after logo
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<br><br><br>", unsafe_allow_html=True)
 
 # Title and description
 st.title("HCM Bot")
@@ -118,13 +118,35 @@ st.markdown(
 
 # Ask a question (big and bold), no space before input
 st.markdown('<div style="font-size:22px; font-weight:bold; margin-bottom:0px;">Ask a question:</div>', unsafe_allow_html=True)
-# Larger input box with prompt
-query = st.text_input(
+
+# Multi-line, large input box with vertically centered placeholder
+query = st.text_area(
     "",
     value=st.session_state.get('prefilled_query', ''),
     key='query_input',
-    placeholder="Enter your query here"
+    placeholder="Enter your query here",
+    height=120  # Adjust height for more lines
 )
+
+# CSS to center placeholder vertically and increase font size
+st.markdown("""
+    <style>
+    textarea {
+        min-height: 120px !important;
+        font-size: 20px !important;
+        display: flex !important;
+        align-items: center !important;
+        text-align: left !important;
+        padding-top: 40px !important; /* Adjust for vertical centering of placeholder */
+    }
+    ::placeholder {
+        text-align: center !important;
+        vertical-align: middle !important;
+        font-size: 20px !important;
+        color: #888 !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 if st.button("Submit") and query.strip():
     st.write("Query Received:", query)
@@ -148,13 +170,3 @@ frequent_queries = get_frequent_queries(2)
 for idx, (question, freq) in enumerate(frequent_queries):
     if st.button(f"{question} ({freq}×)", key=f"faq_{idx}", use_container_width=True):
         st.session_state.prefilled_query = question
-
-# Optional: Make input box visually bigger (Streamlit doesn't natively support a bigger text_input, but you can use CSS)
-st.markdown("""
-    <style>
-        div[data-baseweb="input"] > div {
-            font-size: 20px !important;
-            height: 60px !important;
-        }
-    </style>
-""", unsafe_allow_html=True)
